@@ -26,9 +26,4 @@ Bootstrap status: complete enough for active use
 
 ## Plans
 
-- [Test a four-day workweek](plans/test-four-day-workweek.md) — Awaiting its
-  final outcome review.
-
 ## Pending reviews
-
-- 2026-06-30: [Test a four-day workweek](plans/test-four-day-workweek.md)

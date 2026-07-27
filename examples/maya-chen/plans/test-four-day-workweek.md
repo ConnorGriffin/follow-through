@@ -1,12 +1,11 @@
 ---
 type: plan
-status: awaiting-outcome
+status: reviewed
 created: 2026-05-04
-updated: 2026-05-04
+updated: 2026-07-01
 areas: ["../areas/work-and-energy.md", "../areas/relationships.md"]
 people: ["../people/jordan-lee.md"]
-review_after: 2026-06-30
-outcomes: []
+outcomes: ["../outcomes/four-day-workweek-trial.md"]
 ---
 
 # Test a four-day workweek
@@ -39,5 +38,6 @@ will not simply expand into Thursday evening.
 
 ## Review
 
-Review after 2026-06-30. Compare the prediction with recorded sessions and
-calendar evidence before deciding whether to continue.
+Final review completed 2026-07-01. Deep-work output barely changed and Thursday
+evening energy worsened, so the trial ended. See the
+[outcome](../outcomes/four-day-workweek-trial.md).

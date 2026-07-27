@@ -39,10 +39,11 @@ and Git.
 The fictional example does not make every plan succeed.
 
 [Maya predicts](examples/maya-chen/plans/test-four-day-workweek.md) that
-protecting Friday will increase deep-work output by 25 percent. The completed
-review records that output barely changed, Thursday became more tiring, and the
-trial should end. It also declines to generalize from one schedule experiment
-into a permanent belief about four-day weeks.
+protecting Friday will increase deep-work output by 25 percent. The
+[completed review](examples/maya-chen/outcomes/four-day-workweek-trial.md)
+records that output barely changed, Thursday became more tiring, and the trial
+should end. It also declines to generalize from one schedule experiment into a
+permanent belief about four-day weeks.
 
 That distinction is the point: preserve the prediction, record the result, and
 keep evidence separate from the story you are tempted to tell afterward.
