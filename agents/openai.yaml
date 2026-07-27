@@ -1,0 +1,4 @@
+interface:
+  display_name: "Follow Through"
+  short_description: "Personal memory, plans, and follow-through"
+  default_prompt: "Use $follow-through to help with this personal decision using relevant prior context."
