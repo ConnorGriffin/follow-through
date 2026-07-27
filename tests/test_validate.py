@@ -36,7 +36,7 @@ class ValidateRepositoryTests(unittest.TestCase):
             plan = target / "plans" / "test-four-day-workweek.md"
             plan.write_text(
                 plan.read_text(encoding="utf-8").replace(
-                    "status: awaiting-outcome", "status: settled"
+                    "status: reviewed", "status: settled"
                 ),
                 encoding="utf-8",
             )
@@ -104,11 +104,26 @@ class ValidateRepositoryTests(unittest.TestCase):
             plan = target / "plans" / "test-four-day-workweek.md"
             plan.write_text(
                 plan.read_text(encoding="utf-8").replace(
-                    "status: awaiting-outcome", "status: open"
+                    "status: reviewed", "status: awaiting-outcome"
                 ),
                 encoding="utf-8",
             )
-            self.assertEqual(self.validate_quietly(target), 1)
+            index = target / "INDEX.md"
+            index.write_text(
+                index.read_text(encoding="utf-8").replace(
+                    "## Plans\n",
+                    "## Plans\n\n"
+                    "- [Test a four-day workweek](plans/test-four-day-workweek.md)\n",
+                ),
+                encoding="utf-8",
+            )
+            stderr = io.StringIO()
+            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(
+                stderr
+            ):
+                result = validate_repository(target)
+            self.assertEqual(result, 1)
+            self.assertIn("illegal historical transition", stderr.getvalue())
 
 
 if __name__ == "__main__":
