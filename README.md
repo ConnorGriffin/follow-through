@@ -127,3 +127,5 @@ approved learning changes durable context.
 ## License
 
 MIT. See [LICENSE](LICENSE).
+
+If Follow Through proves useful, you can [sponsor its maintenance](https://github.com/sponsors/ConnorGriffin).
