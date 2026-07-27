@@ -81,6 +81,66 @@ class ValidateRepositoryTests(unittest.TestCase):
             )
             self.assertEqual(self.validate_quietly(target), 1)
 
+    def test_requires_review_queue_entry(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            target = self.copy_example(Path(temporary))
+            plan = target / "plans" / "test-four-day-workweek.md"
+            plan.write_text(
+                plan.read_text(encoding="utf-8")
+                .replace("status: reviewed", "status: awaiting-outcome")
+                .replace(
+                    'people: ["../people/jordan-lee.md"]',
+                    'people: ["../people/jordan-lee.md"]\nreview_after: 2026-07-30',
+                ),
+                encoding="utf-8",
+            )
+            index = target / "INDEX.md"
+            index.write_text(
+                index.read_text(encoding="utf-8").replace(
+                    "## Plans\n",
+                    "## Plans\n\n"
+                    "- [Test a four-day workweek](plans/test-four-day-workweek.md)\n",
+                ),
+                encoding="utf-8",
+            )
+            stderr = io.StringIO()
+            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(
+                stderr
+            ):
+                result = validate_repository(target)
+            self.assertEqual(result, 1)
+            self.assertIn("missing pending review", stderr.getvalue())
+
+    def test_allows_correction_without_terminal_state_change(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            target = self.copy_example(Path(temporary))
+            subprocess.run(["git", "init", "-b", "main"], cwd=target, check=True, capture_output=True)
+            subprocess.run(["git", "add", "."], cwd=target, check=True)
+            subprocess.run(
+                [
+                    "git",
+                    "-c",
+                    "user.name=Follow Through Test",
+                    "-c",
+                    "user.email=test@example.invalid",
+                    "commit",
+                    "-m",
+                    "Record outcome",
+                ],
+                cwd=target,
+                check=True,
+                capture_output=True,
+            )
+            outcome = target / "outcomes" / "four-day-workweek-trial.md"
+            outcome.write_text(
+                outcome.read_text(encoding="utf-8").replace(
+                    "Deep-work sessions increased by 4 percent.",
+                    "Deep-work sessions increased by 4 percent after recounting.",
+                ),
+                encoding="utf-8",
+            )
+            self.assertEqual(self.validate_quietly(target), 0)
+
     def test_rejects_illegal_historical_transition(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             target = self.copy_example(Path(temporary))

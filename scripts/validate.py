@@ -83,6 +83,11 @@ TRANSITIONS = {
     },
     "outcome": {("reviewed", "reviewed")},
 }
+for transition_type, transition_states in LEGAL_STATES.items():
+    TRANSITIONS[transition_type].update(
+        (transition_state, transition_state)
+        for transition_state in transition_states
+    )
 REQUIRED_FIELDS = {"type", "status", "created", "updated", "areas", "people"}
 OPTIONAL_FIELDS = {
     "profile": {"last_confirmed", "review_after"},
@@ -248,6 +253,14 @@ class Validation:
                 self.error(record.relative, "settled work must link to a produced artifact")
         if record.type == "outcome" and "plan" not in record.metadata:
             self.error(record.relative, "outcome requires `plan`")
+        if record.type == "plan":
+            if "outcomes" not in record.metadata:
+                self.error(record.relative, "plan requires `outcomes`")
+            if "review_after" in record.metadata and record.status != "awaiting-outcome":
+                self.error(
+                    record.relative,
+                    "`review_after` is only allowed while awaiting outcome",
+                )
 
     def local_link(self, record: Record, raw: str) -> Path | None:
         parsed = urlparse(raw)
@@ -310,6 +323,20 @@ class Validation:
                     if relative_back not in plan.metadata.get("outcomes", []):
                         self.error(record.relative, "linked plan does not list this outcome")
 
+        if record.type == "plan":
+            for raw in record.metadata.get("outcomes", []):
+                target = self.local_link(record, raw)
+                if not target or not target.exists():
+                    continue
+                outcome = self.records.get(target.relative_to(self.root))
+                if outcome and outcome.type == "outcome":
+                    back = outcome.metadata.get("plan")
+                    back_target = (
+                        self.local_link(outcome, back) if isinstance(back, str) else None
+                    )
+                    if back_target != record.path.resolve():
+                        self.error(record.relative, "linked outcome points to another plan")
+
         counterpart = {
             "supersedes": "superseded_by",
             "superseded_by": "supersedes",
@@ -353,6 +380,8 @@ class Validation:
             self.error("INDEX.md", "missing index")
             return
         text = path.read_text(encoding="utf-8")
+        if not re.search(r"^Bootstrap status:\s*\S", text, re.MULTILINE):
+            self.error("INDEX.md", "missing bootstrap status")
         actual: set[Path] = set()
         for raw in MARKDOWN_LINK_RE.findall(text):
             parsed = urlparse(raw)
@@ -374,6 +403,35 @@ class Validation:
             self.error("INDEX.md", f"missing current record: {relative.as_posix()}")
         for relative in sorted(actual - expected):
             self.error("INDEX.md", f"lists historical record: {relative.as_posix()}")
+
+        pending_text = ""
+        pending_match = re.search(
+            r"^## Pending reviews\s*$\n(.*?)(?=^## |\Z)",
+            text,
+            re.MULTILINE | re.DOTALL,
+        )
+        if pending_match:
+            pending_text = pending_match.group(1)
+        pending_actual: set[Path] = set()
+        for raw in MARKDOWN_LINK_RE.findall(pending_text):
+            target = (self.root / unquote(urlparse(raw).path)).resolve()
+            try:
+                relative = target.relative_to(self.root)
+            except ValueError:
+                continue
+            if relative in self.records:
+                pending_actual.add(relative)
+        pending_expected = {
+            relative
+            for relative, record in self.records.items()
+            if record.type == "plan"
+            and record.status == "awaiting-outcome"
+            and "review_after" in record.metadata
+        }
+        for relative in sorted(pending_expected - pending_actual):
+            self.error("INDEX.md", f"missing pending review: {relative.as_posix()}")
+        for relative in sorted(pending_actual - pending_expected):
+            self.error("INDEX.md", f"invalid pending review: {relative.as_posix()}")
 
     def git_versions(self, record: Record) -> list[str]:
         try:
