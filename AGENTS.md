@@ -30,3 +30,5 @@ profile: reviewed
   genuinely unavoidable and approved.
 - Preserve the two-commit synthetic lifecycle: its Git history is validator
   coverage for `awaiting-outcome` to `reviewed`.
+
+ui-surfaces: none
